@@ -13,8 +13,9 @@ type Feedback struct {
 
 const table string = "feedback"
 
+// TODO realize field selection
 func GetAll(db *sql.DB) map[int]Feedback {
-	query := fmt.Sprintf("SELECT id, email, text FROM `%s`", table)
+	query := fmt.Sprintf("SELECT id, email, text FROM `%s` ORDER BY id DESC", table)
 	rows, err := db.Query(query)
 	if err != nil {
 		panic(err.Error())
@@ -40,4 +41,12 @@ func Create(db *sql.DB, feedback *Feedback) bool {
 		return true
 	}
 	return false
+}
+
+func Delete(db *sql.DB, id int) {
+	query := fmt.Sprintf("DELETE FROM %s WHERE id = %d", table, id)
+	_, err := db.Exec(query)
+	if err != nil {
+		panic(err.Error())
+	}
 }
