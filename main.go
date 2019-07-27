@@ -2,10 +2,13 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"web-app/models/feedback"
 )
@@ -19,9 +22,11 @@ type View struct {
 	Feedbacks map[int]feedback.Feedback
 }
 
-var router = make(map[string]func(w http.ResponseWriter, r *http.Request))
+var routes = make(map[string]func(w http.ResponseWriter, r *http.Request))
 
 func main() {
+
+	router := mux.NewRouter()
 
 	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/gobase")
 
@@ -31,7 +36,7 @@ func main() {
 
 	defer db.Close()
 
-	router["index"] = func(w http.ResponseWriter, r *http.Request) {
+	routes["index"] = func(w http.ResponseWriter, r *http.Request) {
 		data := View{
 			Title: "Index page",
 			Lang:  "uk",
@@ -44,7 +49,7 @@ func main() {
 		tpl.Execute(w, data)
 	}
 
-	router["contact"] = func(w http.ResponseWriter, r *http.Request) {
+	routes["feedback"] = func(w http.ResponseWriter, r *http.Request) {
 
 		// Catch POST request
 		if strings.ToLower("post") == strings.ToLower(r.Method) {
@@ -62,12 +67,12 @@ func main() {
 			} else {
 				fmt.Println("Record not created :(")
 			}
-			http.Redirect(w, r, "/contact", 301)
+			http.Redirect(w, r, "/feedback", 301)
 		} else {
 			//feedbacks := make(map[int]Feedback)
 			feedbacks := feedback.GetAll(db)
 			data := View{
-				Title:     "Contact page",
+				Title:     "Feedback page",
 				Lang:      "uk",
 				Feedbacks: feedbacks,
 			}
@@ -82,9 +87,25 @@ func main() {
 		}
 	}
 
-	http.HandleFunc("/", router["index"])
-	http.HandleFunc("/contact", router["contact"])
+	routes["feedbackDelete"] = func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		id, _ := strconv.Atoi(params["id"])
+		feedback.Delete(db, id)
+
+		if r.Method == "POST" {
+			http.Redirect(w, r, "/feedback", 301)
+		} else {
+			res := make(map[string]bool)
+			res["ok"] = true
+			json.NewEncoder(w).Encode(res)
+		}
+	}
+
+	router.HandleFunc("/", routes["index"])
+	router.HandleFunc("/feedback", routes["feedback"]).Methods("GET", "POST")
+	router.HandleFunc("/feedback/{id}", routes["feedbackDelete"]).Methods("DELETE")
+	router.HandleFunc("/feedback/delete/{id}", routes["feedbackDelete"]).Methods("POST")
 
 	fmt.Println(fmt.Sprintf("Server starting on :%s port", PORT))
-	http.ListenAndServe(fmt.Sprintf(":%s", PORT), nil)
+	http.ListenAndServe(fmt.Sprintf(":%s", PORT), router)
 }

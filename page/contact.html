@@ -13,7 +13,12 @@
                 <div class="col-md-12">
                     <ul class="list-group">
                         {{ range .Feedbacks }}
-                            <li class="list-group-item">{{ .Id }}. {{ .Email }}</li>
+                            <li class="list-group-item" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>{{ .Id }}. {{ .Email }}</span>
+                                <form action="/feedback/delete/{{ .Id }}" method="post" style="display: inline-block">
+                                    <button class="btn btn-danger">X</button>
+                                </form>
+                            </li>
                         {{ end }}
                     </ul>
                 </div>
