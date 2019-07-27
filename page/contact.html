@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="{{ .Lang }}">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ .Title }}</title>
+</head>
+<body>
+    {{ if .Feedbacks }}
+        <ul>
+            {{ range .Feedbacks }}
+                <li>{{ .Id }}. {{ .Email }}</li>
+            {{ end }}
+        </ul>
+    {{ end }}
+    <form
+        method="post"
+    >
+        <input type="email" name="email">
+        <textarea name="text"></textarea>
+        <button>Send</button>
+    </form>
+</body>
+</html>
