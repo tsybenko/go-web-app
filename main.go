@@ -6,10 +6,12 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
+	"web-app/configs"
 	"web-app/models/feedback"
 )
 
@@ -31,9 +33,10 @@ type (
 var routes = make(map[string]Route)
 
 func main() {
+	godotenv.Load()
 	router := mux.NewRouter()
-
-	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/gobase")
+	cnf := configs.DbConfig
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", cnf["username"], cnf["password"], cnf["host"], cnf["port"], cnf["dbname"]))
 
 	if err != nil {
 		panic(err.Error())
